@@ -1,0 +1,98 @@
+#include<stdio.h>
+#include<malloc.h>
+
+struct Telefon {
+	int id;
+	int RAM ;
+	char* producator;
+	float pret;
+	char serie;
+};
+struct Telefon initializare(int id, int ram, const char* productor, float pret, char serie ) {
+	struct Telefon t;
+	t.id = id;
+	t.RAM = ram;
+	t.producator = (char*)malloc(sizeof(char) * (strlen(productor) + 1));
+	strcpy_s(t.producator, strlen(productor) + 1, productor);
+	t.pret = pret;
+	t.serie = serie;
+	return t;
+}
+
+void afisare(struct Telefon t) {
+	if (t.producator != NULL) {
+		printf("ID: %d\n", t.id);
+		printf("RAM: %d\n", t.RAM);
+		printf("Producator: %s\n", t.producator);
+		printf("Pret: %.2f\n", t.pret);
+		printf("Serie: %c\n", t.serie);
+	}
+}
+
+//void afisareVector(struct Telfon* vector, int nrElemente) {
+//	
+//	for (int i = 0; i < nrElemente; i++) {
+//		afisare(vector[i]);
+//	}
+//
+//}
+
+struct Telefon* copiazaPrimeleNElemente(struct Telefon* vector, int nrElemente, int nrElementeCopiate) {
+	
+	struct Telefon *vectorNou=NULL;
+	vectorNou = (struct Telefon*)malloc(sizeof(struct Telefon) * nrElementeCopiate);
+	for (int i = 0; i < nrElementeCopiate; i++) {
+		vectorNou[i] = vector[i]; //shalow copy = atribuire adrese
+		vectorNou[i].producator = (char*)malloc(sizeof(char) * (strlen(vector[i].producator) + 1));
+		strcpy_s(vectorNou[i].producator, strlen(vector[i].producator) + 1, vector[i].producator);
+	}
+
+	return vectorNou;
+}
+
+void dezalocare(struct Telefon** vector, int* nrElemente) {
+	for (int i = 0; i < *nrElemente; i++) {
+		if ((*vector)[i].producator != NULL) {
+			free((*vector)[i].producator);
+		}
+	}
+	free(*vector);
+	*vector = NULL;
+}
+
+void copiazaAnumiteElemente(struct Telefon* vector, char nrElemente, float prag, struct Sablon** vectorNou, int* dimensiune) {
+	//parametrul prag poate fi modificat in functie de 
+	// tipul atributului ales pentru a indeplini o conditie
+	//este creat un nou vector cu elementele care indeplinesc acea conditie
+}
+
+struct Telefon getPrimulElementConditionat(struct Telefon* vector, int nrElemente, const char* conditie) {
+	//trebuie cautat elementul care indeplineste o conditie
+	//dupa atributul de tip char*. Acesta este returnat.
+	struct Telefon s;
+	s.id = 1;
+
+	return s;
+}
+	
+
+
+int main() {
+
+	struct Telefon* telefoane = NULL;      
+	int nrTelefoane = 3;
+	telefoane = (struct Telefon*)malloc(sizeof(struct Telefon) * nrTelefoane);
+	telefoane[0] = initializare(1, 256, "Samsung", 2000, 'S');
+	telefoane[1] = initializare(1, 512, "Motorola", 1500, 'M');
+	telefoane[2] = initializare(1, 256, "Apple", 2200, 'A');
+	afisareVector(telefoane, nrTelefoane);
+
+	struct Telefon* primeleTelefoane = NULL;
+	int nrPrimeleTelefoane = 2;
+
+	primeleTelefoane = copiazaPrimeleNElemente(telefoane, nrTelefoane, nrPrimeleTelefoane);
+	afisareVector(primeleTelefoane, nrPrimeleTelefoane);
+	printf("\n\nPrimele telefoane: \n\n");
+
+	return 0;
+}
