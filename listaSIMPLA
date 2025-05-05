@@ -1,0 +1,156 @@
+//lista simpla cu n noduri
+//info despre agentiile unei banci
+//info citite dintr-un fisier text .txt
+//cod(int), denumire (char*), profit(float)
+// adresa(char*), nr_clienti(int)
+
+//2. functie pt stergerea agentilor cu coduri impare
+//iar agentii cu codurile pare vor fi salvati intr-un fisier txt
+
+//3. conversia elm din lista simpla intr-o lista de liste
+//prin gruparea elementelor dupa un criteriu la alegere
+
+//4. dezalocare toate structurile de date diamice construite
+//operatia de dezalocare va fi insotita de afisarea continutului structurilor in fisiere text
+//inainte de dezalocarea memoriei heap
+
+#include <stdio.h>
+#include <malloc.h>
+
+typedef struct  {
+	int cod;
+	char* denumire;
+	float profit;
+	char* adresa;
+	int nrClienti;
+}agentie;
+
+typedef struct {
+	agentie info;
+	struct nod* next;
+}nod;
+
+nod* initializareNod(agentie a) {
+
+	nod* nou = (nod*)malloc(sizeof(nod));
+	nou->info.cod = a.cod;
+	nou->info.denumire = (char*)malloc(sizeof(char) * (strlen(a.denumire) + 1)*sizeof(char));
+	strcpy(nou->info.denumire, a.denumire);
+	nou->info.profit = a.profit;
+	nou->info.adresa = (char*)malloc(sizeof(char) * (strlen(a.adresa) + 1) * sizeof(char));
+	strcpy(nou->info.adresa, a.adresa);
+	nou->info.nrClienti = a.nrClienti;
+	nou->next = NULL;
+	return nou;
+}
+
+nod* inserareNod(nod* cap, agentie a) {
+	nod* nou = initializareNod(a);
+	if (cap == NULL) 
+		cap = nou;
+	else {
+		nod* temp = cap;
+		while (temp->next != NULL) 
+			temp = temp->next;
+		temp->next = nou;
+		
+	}
+	return cap;
+	}
+
+void traversareLista(nod* cap) {
+	nod* temp = cap;
+	while (temp != NULL) {
+		printf("Cod: %d\n, Denumire: %s\n, Profit: %.2f\n, Adresa: %s\n, Nr clienti: %d\n", temp->info.cod, temp->info.denumire, temp->info.profit, temp->info.adresa, temp->info.nrClienti);
+		temp = temp->next;
+	}
+}
+
+void dezalocareLista(nod* cap) {
+	nod* temp = cap;
+	while (temp != NULL) {
+		nod* aux = temp->next;
+		free(temp->info.denumire);
+		free(temp->info.adresa);
+		free(temp);
+		temp = aux;
+	}
+}
+
+void stergereCoduriImpare(nod** cap, const char* numeFisier) {
+	FILE* f = fopen(numeFisier, "w");
+	if (!f) {
+		printf("Eroare la deschiderea fisierului %s\n", numeFisier);
+		return;
+	}
+	nod* temp = *cap;
+	nod* prev = NULL;
+
+	while (temp != NULL) {
+		if (temp->info.cod % 2 != 0) {
+			nod* aux = temp;
+			if (prev == NULL) {
+				*cap = temp->next; //stergere nod 1
+			}
+			else {
+				prev->next = temp->next;
+				temp = temp->next; //stergere nod 2
+			}
+			free(aux->info.denumire);
+			free(aux->info.adresa);
+			free(aux);
+		}
+		else {
+
+			fprintf(f, "Cod: %d\n, Denumire: %s\n, Profit: %.2f\n, Adresa: %s\n, Nr clienti: %d\n", temp->info.cod, temp->info.denumire, temp->info.profit, temp->info.adresa, temp->info.nrClienti);	
+			prev = temp;
+			temp = temp->next;
+		}
+	}
+}
+
+void salvareSiDezalocare(nod* cap, const char* numeFisier) {
+	FILE* f = fopen(numeFisier, "w");
+	if (!f)
+		printf("Eroare la deschiderea fisierului %s\n", numeFisier);
+	return;
+	while (cap != NULL) {
+		fprintf(f, "Cod: %d\n, Denumire: %s\n, Profit: %.2f\n, Adresa: %s\n, Nr clienti: %d\n", cap->info.cod, cap->info.denumire, cap->info.profit, cap->info.adresa, cap->info.nrClienti);
+		nod* aux = cap->next;
+		free(cap->info.denumire);
+		free(cap->info.adresa);
+		free(cap);
+		cap = aux;
+	}
+	fclose(f);
+}
+
+void main() {
+	int nrClienti;
+	agentie a;
+	nod* cap = NULL;
+	char buffer[100];
+	FILE* f = fopen("agentii.txt", "r");
+	fscanf(f, "%d", &nrClienti);
+	for (int i = 0; i < nrClienti; i++) {
+		fscanf(f, "%d", &a.cod);
+		fscanf(f, "%s", buffer);
+		a.denumire = (char*)malloc(sizeof(char) * (strlen(buffer) + 1) * sizeof(char));
+		strcpy(a.denumire, buffer);
+		fscanf(f, "%f", &a.profit);
+		fscanf(f, "%s", buffer);
+		a.adresa = (char*)malloc(sizeof(char) * (strlen(buffer) + 1) * sizeof(char));
+		strcpy(a.adresa, buffer);
+		fscanf(f, "%d", &a.nrClienti);
+		cap = inserareNod(cap, a);
+		free(a.adresa);
+		free(a.denumire);
+	}
+	fclose(f);
+
+	traversareLista(cap);
+	dezalocareLista(cap);
+
+	stergereCoduriImpare(&cap, "agentii_pare.txt");
+	salvareSiDezalocare(cap, "agentii_dezalocate.txt");
+}
