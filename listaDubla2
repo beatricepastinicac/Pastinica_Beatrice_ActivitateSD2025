@@ -1,0 +1,140 @@
+#include <iostream>
+#include <malloc.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+	unsigned int idRezervare;
+	char* numeHotel;
+	unsigned char numeClient;
+	float pret;
+}Rezervare;
+
+typedef struct {
+	Rezervare info;
+	struct nodStiva* next;
+}nodStiva;
+
+typedef struct {
+	Rezervare info;
+	nodCoada* next;
+}nodCoada;
+
+//functie de inserare nod in stiva
+void adaugaNod(nodStiva** varf, Rezervare r) {
+	nodStiva* nou = (nodStiva*)malloc(sizeof(nodStiva));
+	nou->info.idRezervare = r.idRezervare;
+	nou->info.pret = r.pret;
+	nou->info.numeClient = r.numeClient;
+	nou->info.numeHotel = (char*)malloc(sizeof(char) * strlen(r.numeHotel) + 1);
+	strcpy(nou->info.numeHotel, r.numeHotel);
+	if (*varf == NULL) {
+		*varf = nou;
+	}
+	else {
+		nou->next = *varf;
+		*varf = nou;
+	}
+
+	
+}
+
+//functie de extragere nod
+
+int extragereNod(nodStiva** varf, Rezervare* r) {
+	if (*varf == NULL)
+		return -1;
+	else {
+		(*r).idRezervare = (*varf)->info.idRezervare;
+		(*r).numeClient = (*varf)->info.numeClient;
+		(*r).pret = (*varf)->info.pret;
+		(*r).numeHotel = (char*)malloc((strlen((*varf)->info.numeHotel) + 1) * sizeof(char));
+		strcpy((*r).numeHotel, (*varf)->info.numeHotel);
+		nodStiva* temp = *varf;
+		*varf = (*varf)->next;
+		free(temp->info.numeHotel);
+		free(temp);
+		return 0;
+	}
+}
+
+
+	void afisareStiva(nodStiva* varf){
+		nodStiva* temp = varf;
+		while (temp) {
+			printf("ID Rezervare: %d\n", temp->info.idRezervare);
+		}
+		
+	}
+
+	void dezalocareStiva(nodStiva* varf) {
+		Rezervare r;
+		while (extragereNod(&varf, &r) == 0) {
+			free(r.numeHotel);
+		}
+	}
+
+	//functie de inserare nod in coada
+	void adaugaNodCoada(nodCoada** prim, nodCoada** ultim, Rezervare r) {
+		nodCoada* nou = (nodCoada*)malloc(sizeof(nodCoada));
+		nou->info.idRezervare = r.idRezervare;
+		nou->info.pret = r.pret;
+		nou->info.numeClient = r.numeClient;
+		nou->info.numeHotel = (char*)malloc(sizeof(char) * strlen(r.numeHotel) + 1);
+		strcpy(nou->info.numeHotel, r.numeHotel);
+		nou->next = NULL;
+		if (*prim == NULL || *ultim == NULL) {
+			*prim = nou;
+			*ultim = nou;
+		}
+		else {
+			(*ultim)->next = nou;
+			*ultim = nou;
+		}
+	}
+
+	//functie de extragere nod din coada
+	int extrageNodCoada(nodCoada** prim, nodCoada** ultim, Rezervare* r) {
+		if (*prim != NULL && *ultim != NULL) {
+			(*r).idRezervare = (*prim)->info.idRezervare;
+			(*r).numeClient = (*prim)->info.numeClient;
+			(*r).pret = (*prim)->info.pret;
+			(*r).numeHotel = (char*)malloc((strlen((*prim)->info.numeHotel) + 1) * sizeof(char));
+			strcpy((*r).numeHotel, (*prim)->info.numeHotel);
+			nodCoada* temp = *prim;
+			*prim = (*prim)->next;
+			free(temp->info.numeHotel);
+			free(temp);
+			return 0;
+		}
+		if (*prim == NULL) {
+			*ultim = NULL;
+			return -1;
+		}
+	}
+
+	void afisareCoada(nodCoada* prim) {
+		nodCoada* temp = prim;
+		while (temp) {
+			printf("ID Rezervare: %d\n", temp->info.idRezervare);
+			temp = temp->next;
+		}
+	}
+
+	void dezalocareCoada(nodCoada* prim, nodCoada* ultim) {
+		Rezervare r;
+		while (extrageNodCoada(&prim, &ultim, &r) == 0) {
+			free(r.numeHotel);
+
+		}
+	}
+
+	void conversieStivaCoada(nodStiva* varf, nodCoada** prim, nodCoada* ultim) {
+		Rezervare r;
+		while (extrageNod(&varf, &r) == 0)
+			adaugaNodCoada(prim, ultim, r);
+	}
+
+	void main() {
+
+	}
