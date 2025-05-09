@@ -1,0 +1,196 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <malloc.h>
+#include <stdio.h>
+#include <string.h>
+
+typedef struct {
+    unsigned int idComanda;
+    char* dataLansareComanda;
+    char* dataLivrareProgramata;
+    char* numeClient;
+    float sumaPlata;
+} comanda;
+
+typedef struct nodLS {
+    comanda inf;
+    struct nodLS* next;
+} nodLS;
+
+typedef struct {
+    nodLS** vect;
+    int nrElem;
+} hashT;
+
+int functieHash(hashT tabela, int cheie) {
+    return cheie % tabela.nrElem;
+}
+
+void inserareNodLS(nodLS** cap, comanda p) {
+    nodLS* nou = (nodLS*)malloc(sizeof(nodLS));
+    nou->next = NULL;
+    nou->inf.idComanda = p.idComanda;
+    nou->inf.dataLansareComanda = (char*)malloc(strlen(p.dataLansareComanda) + 1);
+    strcpy(nou->inf.dataLansareComanda, p.dataLansareComanda);
+    nou->inf.dataLivrareProgramata = (char*)malloc(strlen(p.dataLivrareProgramata) + 1);
+    strcpy(nou->inf.dataLivrareProgramata, p.dataLivrareProgramata);
+    nou->inf.numeClient = (char*)malloc(strlen(p.numeClient) + 1);
+    strcpy(nou->inf.numeClient, p.numeClient);
+    nou->inf.sumaPlata = p.sumaPlata;
+
+    if (*cap == NULL)
+        *cap = nou;
+    else {
+        nodLS* temp = *cap;
+        while (temp->next) temp = temp->next;
+        temp->next = nou;
+    }
+}
+
+void inserareHash(hashT tabela, comanda c) {
+    int poz = functieHash(tabela, c.idComanda);
+    inserareNodLS(&tabela.vect[poz], c);
+}
+
+hashT creareTabelaGoala(int dim) {
+    hashT tabela;
+    tabela.nrElem = dim;
+    tabela.vect = (nodLS**)malloc(dim * sizeof(nodLS*));
+    for (int i = 0; i < dim; i++)
+        tabela.vect[i] = NULL;
+    return tabela;
+}
+
+hashT creareTabelaDinFisier(int dim) {
+    hashT tabela = creareTabelaGoala(dim);
+    FILE* file = fopen("tabelaChaining.txt", "r");
+    if (!file) {
+        printf("Eroare la deschiderea fișierului.");
+        return tabela;
+    }
+    int n;
+    fscanf(file, "%d", &n);
+    for (int i = 0; i < n; i++) {
+        comanda c;
+        char buffer[100];
+        fscanf(file, "%u %s %s %s %f",
+            &c.idComanda, buffer, buffer + 30, buffer + 60, &c.sumaPlata);
+        c.dataLansareComanda = (char*)malloc(strlen(buffer) + 1);
+        strcpy(c.dataLansareComanda, buffer);
+        c.dataLivrareProgramata = (char*)malloc(strlen(buffer + 30) + 1);
+        strcpy(c.dataLivrareProgramata, buffer + 30);
+        c.numeClient = (char*)malloc(strlen(buffer + 60) + 1);
+        strcpy(c.numeClient, buffer + 60);
+        inserareHash(tabela, c);
+    }
+    fclose(file);
+    return tabela;
+}
+
+void traversareLS(nodLS* cap) {
+    while (cap) {
+        printf("IdComanda=%u, Lansare=%s, Livrare=%s, Client=%s, Suma=%.2f ",
+            cap->inf.idComanda, cap->inf.dataLansareComanda,
+            cap->inf.dataLivrareProgramata, cap->inf.numeClient, cap->inf.sumaPlata);
+        cap = cap->next;
+    }
+}
+
+void traversareHash(hashT tabela) {
+    for (int i = 0; i < tabela.nrElem; i++) {
+        if (tabela.vect[i]) {
+            printf("Pozitia %d: ", i);
+            traversareLS(tabela.vect[i]);
+        }
+    }
+}
+
+void comenziLivrareLaData(hashT tabela, char* data) {
+    int count = 0;
+    for (int i = 0; i < tabela.nrElem; i++) {
+        nodLS* temp = tabela.vect[i];
+        while (temp) {
+            if (strcmp(temp->inf.dataLivrareProgramata, data) == 0)
+                count++;
+            temp = temp->next;
+        }
+    }
+    printf("Comenzi programate pentru %s: %d ", data, count);
+}
+
+void stergeComenziLivrate(hashT tabela) {
+    char dataCurenta[100];
+    printf("Introduceți data curentă: ");
+    scanf("%s", dataCurenta);
+    for (int i = 0; i < tabela.nrElem; i++) {
+        nodLS* temp = tabela.vect[i];
+        nodLS* prev = NULL;
+        while (temp) {
+            if (strcmp(temp->inf.dataLivrareProgramata, dataCurenta) < 0) {
+                nodLS* deSters = temp;
+                if (prev == NULL)
+                    tabela.vect[i] = temp = temp->next;
+                else
+                    prev->next = temp = temp->next;
+                free(deSters->inf.dataLansareComanda);
+                free(deSters->inf.dataLivrareProgramata);
+                free(deSters->inf.numeClient);
+                free(deSters);
+            }
+            else {
+                prev = temp;
+                temp = temp->next;
+            }
+        }
+    }
+}
+
+void salvareComenziInListaSeparata(hashT tabela, nodLS** cap) {
+    for (int i = 0; i < tabela.nrElem; i++) {
+        nodLS* temp = tabela.vect[i];
+        while (temp) {
+            inserareNodLS(cap, temp->inf);
+            temp = temp->next;
+        }
+    }
+}
+
+void dezalocareLS(nodLS* cap) {
+    while (cap) {
+        nodLS* aux = cap->next;
+        free(cap->inf.dataLansareComanda);
+        free(cap->inf.dataLivrareProgramata);
+        free(cap->inf.numeClient);
+        free(cap);
+        cap = aux;
+    }
+}
+
+void dezalocareHash(hashT tabela) {
+    for (int i = 0; i < tabela.nrElem; i++)
+        if (tabela.vect[i])
+            dezalocareLS(tabela.vect[i]);
+    free(tabela.vect);
+}
+
+int main() {
+    hashT tabela = creareTabelaDinFisier(10);
+    traversareHash(tabela);
+
+    char data[100];
+    printf("Introduceți o dată pentru livrare: ");
+    scanf("%s", data);
+    comenziLivrareLaData(tabela, data);
+
+    stergeComenziLivrate(tabela);
+    printf("   După ștergere : ");
+    traversareHash(tabela);
+
+    nodLS* cap = NULL;
+    salvareComenziInListaSeparata(tabela, &cap);
+    printf("Lista salvată separat : ");
+    traversareLS(cap);
+    dezalocareLS(cap);
+
+    dezalocareHash(tabela);
+    return 0;
+}
