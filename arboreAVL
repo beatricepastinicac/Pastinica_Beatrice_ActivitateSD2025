@@ -1,0 +1,122 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+//struct nod avl
+typedef struct NodAVL{
+int cheie;
+int inaltime;
+struct NodAVL *stanga;
+struct NodAVL *dreapta;
+}NodAVL;
+
+//inaltime nod
+int inaltime(NodAVL *nod){
+return (nod==NULL)?0:nod->inaltime;}
+
+//max dintre 2 val
+int max(int a, int b){
+return (a>b)?a:b;}
+
+//creare nod
+NodAVL* creazaNod(int cheie){
+NodAVL* nod=(NodAVL*)malloc(sizeof(NodAVL));
+nod->cheie=cheie;
+nod->inaltime=1;
+nod->stanga=nod->dreapta=NULL;
+return nod;}
+
+//rotatie dreapta
+NodAVL* rotatieDreapta(NodAVL* y){
+NodAVL* x=Y->STANGA;
+NodAVL* T2=x->dreapta;
+
+x->dreapta=y;
+y->stanga=T2;
+
+y->inaltime=max(inaltime(y->stanga, inaltime(y->dreapta))+1;
+ x->inaltime = max(inaltime(x->stanga), inaltime(x->dreapta)) + 1;
+
+    return x;
+}
+
+//rotatie stanga
+NodAVL* rotatieStanga(NodAVL* x) {
+    NodAVL* y = x->dreapta;
+    NodAVL* T2 = y->stanga;
+y->stanga = x;
+    x->dreapta = T2;
+
+    x->inaltime = max(inaltime(x->stanga), inaltime(x->dreapta)) + 1;
+    y->inaltime = max(inaltime(y->stanga), inaltime(y->dreapta)) + 1;
+
+    return y;
+}
+
+// factor balans
+int balans(NodAVL* nod) {
+    return (nod == NULL) ? 0 : inaltime(nod->stanga) - inaltime(nod->dreapta);
+}
+
+//inserare
+NodAVL* inserare(NodAVL* nod, int cheie) {
+    if (nod == NULL)
+        return creeazaNod(cheie);
+
+    if (cheie < nod->cheie)
+        nod->stanga = inserare(nod->stanga, cheie);
+    else if (cheie > nod->cheie)
+        nod->dreapta = inserare(nod->dreapta, cheie);
+    else
+        return nod; // Valorile duplicate nu sunt permise
+
+    // actualizare nod curent
+    nod->inaltime = 1 + max(inaltime(nod->stanga), inaltime(nod->dreapta));
+
+    int b = balans(nod);
+
+    
+    if (b > 1 && cheie < nod->stanga->cheie)
+        return rotatieDreapta(nod); 
+
+    if (b < -1 && cheie > nod->dreapta->cheie)
+        return rotatieStanga(nod);
+
+    if (b > 1 && cheie > nod->stanga->cheie) {
+        nod->stanga = rotatieStanga(nod->stanga);
+        return rotatieDreapta(nod); 
+    }
+
+    if (b < -1 && cheie < nod->dreapta->cheie) {
+        nod->dreapta = rotatieDreapta(nod->dreapta);
+        return rotatieStanga(nod); 
+    }
+
+    return nod; 
+}
+
+// traversare in-order
+void inOrder(NodAVL* radacina) {
+    if (radacina != NULL) {
+        inOrder(radacina->stanga);
+        printf("%d ", radacina->cheie);
+        inOrder(radacina->dreapta);
+    }
+}
+
+// testare
+int main() {
+    NodAVL* radacina = NULL;
+
+    int valori[] = {10, 20, 30, 40, 50, 25};
+    int n = sizeof(valori) / sizeof(valori[0]);
+
+    for (int i = 0; i < n; i++) {
+        radacina = inserare(radacina, valori[i]);
+    }
+
+    printf("Traversare in-order a arborelui AVL:\n");
+    inOrder(radacina);
+    printf("\n");
+
+    return 0;
+}
