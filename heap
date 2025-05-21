@@ -1,0 +1,178 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct{
+	int codComanda;
+	char* numeClient;
+	int nrProduse;
+	float sumaPlata;
+} Comanda;
+
+typedef struct Nod{
+	Comanda info;
+	struct Nod* next;
+}Nod;
+
+//creare nod
+Nod* creareNod(Comanda c) {
+	Nod* nou = (Nod*)malloc(sizeof(Nod));
+	nou->info.codComanda = c.codComanda;
+	nou->info.nrProduse = c.nrProduse;
+	nou->info.sumaPlata = c.sumaPlata;
+	nou->info.numeClient = (char*)malloc(strlen(c.numeClient) + 1 * sizeof(char));
+	strcpy(nou->info.numeClient, c.numeClient);
+	nou->next = NULL;
+	return nou;
+
+}
+
+//fifo -inserare coada
+void inserareCoada(Nod** prim, Nod** ultim, Comanda c) {
+	Nod* nou = creareNod(c);
+	if (*prim == NULL) {
+		*prim = *ultim = nou;
+	}
+	else {
+		(*ultim)->next = nou;
+		*ultim = nou;
+	}
+}
+
+//traversare coada
+void traversare(Nod* prim) {
+	while (prim) {
+		printf("cod> %d, Client: %s, Produse: %d, Plata: %.2f\n",
+			prim->info.codComanda,
+			prim->info.numeClient,
+			prim->info.nrProduse,
+			prim->info.sumaPlata);
+			prim = prim->next;
+	}
+}
+
+//extragere si stergere cu cond sum>100
+Nod* extragere(Nod** prim, Nod** ultim, Comanda* select) {
+	if (*prim == NULL)
+		return NULL;
+
+	if ((*prim)->info.sumaPlata > 100) {
+		Nod* temp = *prim;
+		*select = temp->info;
+		*prim = (*prim)->next;
+		if (*prim == NULL)
+			*ultim = NULL;
+		return temp;
+
+	}
+	else {
+		printf("Comanada din capatul cozii depaseste 100 lei.\n");
+		return NULL;
+	}
+}
+
+//salvare in vector + sortare
+void salvareVector(Nod* prim, Comanda** vector, int* dim) {
+	Nod* temp = prim;
+	*dim = 0;
+
+	while (temp) {
+		if (temp->info.sumaPlata > 100)
+			(*dim)++;
+		temp = temp->next;
+	}
+
+	*vector = (Comanda*)malloc((*dim) * sizeof(Comanda));
+	int k = 0;
+	temp = prim;
+	while (temp) {
+		if (temp->info.sumaPlata > 100) {
+			(*vector)[k].codComanda = temp->info.codComanda;
+			(*vector)[k].numeClient = (char*)malloc((strlen(temp->info.numeClient) + 1 )*( sizeof(char)));
+			strcpy((*vector)[k].numeClient, temp->info.numeClient);
+			(*vector)[k].nrProduse = temp->info.nrProduse;
+			(*vector)[k].sumaPlata = temp->info.sumaPlata;
+			k++;
+		}
+		temp = temp->next;
+	}
+
+	//sortare nr prod descrescator
+	for (int i = 0; i < *dim - 1; i++) {
+		for (int j = i + 1; j < *dim; j++) {
+			if ((*vector)[i].nrProduse < (*vector)[j].nrProduse) {
+				Comanda aux = (*vector[i]);
+				(*vector)[i] = (*vector)[j];
+				(*vector)[j] = aux;
+			}
+		}
+	}
+}
+
+
+
+//dezalocare
+void dezalocare(Nod* prim) {
+	while (prim) {
+		Nod* temp = prim;
+		prim = prim->next;
+		free(temp->info.numeClient);
+		free(temp);
+	}
+}
+
+
+//testare
+
+int main() {
+	Nod* prim = NULL;
+	Nod* ultim = NULL;
+
+	//inserare comenzi
+	Comanda c1 = { 1, "Ionescu", 3, 120.5 };
+	Comanda c2 = { 2, "Popescu", 1, 75.0 };
+	Comanda c3 = { 3, "Georgescu", 5, 300.0 };
+	Comanda c4 = { 4, "Marin", 2, 98.0 };
+	Comanda c5 = { 5, "Dobre", 4, 150.0 };
+
+	inserareCoada(&prim, &ultim, c1);
+	inserareCoada(&prim, &ultim, c2);
+ 	inserareCoada(&prim, &ultim, c3);
+	inserareCoada(&prim, &ultim, c4);
+	inserareCoada(&prim, &ultim, c5);
+
+
+	printf("Comenzi in coada: \n");
+	traversare(prim);
+
+	printf("\n--- Extragere comanda cu plata > 100 ---\n");
+	Comanda extrasa;
+	Nod* nodExtras = extragere(&prim, &ultim, &extrasa);
+	if (nodExtras) {
+		printf("Extras: %d, %s, %d, %.2f\n",
+			extrasa.codComanda, extrasa.numeClient,
+			extrasa.nrProduse, extrasa.sumaPlata);
+		free(nodExtras->info.numeClient);
+		free(nodExtras);
+	}
+
+	printf("\n--- Coada dupa extragere ---\n");
+	traversare(prim);
+
+	printf("\n--- Vector comenzi cu plata > 100, sortat ---\n");
+	Comanda* vect = NULL;
+	int dim = 0;
+	salvareVector(prim, &vect, &dim);
+	for (int i = 0; i < dim; i++)
+		printf("Cod: %d, Client: %s, Produse: %d, Plata: %.2f\n",
+			vect[i].codComanda, vect[i].numeClient,
+			vect[i].nrProduse, vect[i].sumaPlata);
+
+	for (int i = 0; i < dim; i++)
+		free(vect[i].numeClient);
+	free(vect);
+	dezalocare(prim);
+
+	return 0;
+}
