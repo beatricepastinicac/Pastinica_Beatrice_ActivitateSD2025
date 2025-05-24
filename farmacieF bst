@@ -1,0 +1,237 @@
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#include <string.h>
+
+
+
+//structura
+
+typedef struct {
+
+    int id;
+
+    char* nume;
+
+    char* localitate;
+
+    int nrAngajati;
+
+    char* tipFarmacie; // atribut extra: "independenta" / "retea"
+
+} Farmacie;
+
+
+
+// strcut nod arbore
+
+typedef struct Nod {
+
+    Farmacie info;
+
+    struct Nod* st;
+
+    struct Nod* dr;
+
+} Nod;
+
+
+
+//nod
+
+Nod* creareNod(Farmacie f) {
+
+    Nod* nou = (Nod*)malloc(sizeof(Nod));
+
+    nou->info.id = f.id;
+
+    nou->info.nrAngajati = f.nrAngajati;
+
+
+
+    nou->info.nume = (char*)malloc(strlen(f.nume) + 1);
+
+    strcpy(nou->info.nume, f.nume);
+
+
+
+    nou->info.localitate = (char*)malloc(strlen(f.localitate) + 1);
+
+    strcpy(nou->info.localitate, f.localitate);
+
+
+
+    nou->info.tipFarmacie = (char*)malloc(strlen(f.tipFarmacie) + 1);
+
+    strcpy(nou->info.tipFarmacie, f.tipFarmacie);
+
+
+
+    nou->st = nou->dr = NULL;
+
+    return nou;
+
+}
+
+
+
+// inserare
+
+Nod* inserare(Nod* rad, Farmacie f) {
+
+    if (!rad) return creareNod(f);
+
+    if (f.id < rad->info.id)
+
+        rad->st = inserare(rad->st, f);
+
+    else
+
+        rad->dr = inserare(rad->dr, f);
+
+    return rad;
+
+}
+
+
+
+//parcurgere in ordine
+
+void inordine(Nod* rad) {
+
+    if (rad) {
+
+        inordine(rad->st);
+
+        printf("ID: %d | Nume: %s | Oras: %s | Angajati: %d | Tip: %s\n",
+
+            rad->info.id, rad->info.nume, rad->info.localitate,
+
+            rad->info.nrAngajati, rad->info.tipFarmacie);
+
+        inordine(rad->dr);
+
+    }
+
+}
+
+
+
+// cautare dupa locatie
+
+void cautaDupaLocalitate(Nod* rad, const char* oras) {
+
+    if (rad) {
+
+        cautaDupaLocalitate(rad->st, oras);
+
+        if (strcmp(rad->info.localitate, oras) == 0)
+
+            printf("Gasita in %s: %s\n", oras, rad->info.nume);
+
+        cautaDupaLocalitate(rad->dr, oras);
+
+    }
+
+}
+
+
+
+// deep copy
+
+Nod* deepCopy(Nod* rad) {
+
+    if (!rad) return NULL;
+
+    Nod* copie = creareNod(rad->info);
+
+    copie->st = deepCopy(rad->st);
+
+    copie->dr = deepCopy(rad->dr);
+
+    return copie;
+
+}
+
+
+
+// dezalocare
+
+void dezalocare(Nod* rad) {
+
+    if (rad) {
+
+        dezalocare(rad->st);
+
+        dezalocare(rad->dr);
+
+        free(rad->info.nume);
+
+        free(rad->info.localitate);
+
+        free(rad->info.tipFarmacie);
+
+        free(rad);
+
+    }
+
+}
+
+
+
+//testare
+
+int main() {
+
+    Nod* rad = NULL;
+
+
+
+    Farmacie f1 = { 10, "Farmacia A", "Bucuresti", 12, "retea" };
+
+    Farmacie f2 = { 5, "Farmacia B", "Cluj", 7, "independenta" };
+
+    Farmacie f3 = { 15, "Farmacia C", "Cluj", 10, "retea" };
+
+
+
+    rad = inserare(rad, f1);
+
+    rad = inserare(rad, f2);
+
+    rad = inserare(rad, f3);
+
+
+
+    printf("--- Inordine original ---\n");
+
+    inordine(rad);
+
+
+
+    printf("\n--- Cauta farmacii in Cluj ---\n");
+
+    cautaDupaLocalitate(rad, "Cluj");
+
+
+
+    Nod* copie = deepCopy(rad);
+
+    printf("\n--- Inordine copie (deep copy) ---\n");
+
+    inordine(copie);
+
+
+
+    dezalocare(rad);
+
+    dezalocare(copie);
+
+
+
+    return 0;
+
+}
